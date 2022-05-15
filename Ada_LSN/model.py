@@ -1,6 +1,6 @@
 from Ada_LSN.operations import *
 import torch.nn.functional as F
-from modules.binary_cross_entropy import bce2d as b1
+from modules.binary_cross_entropy_exon import bce2d as b1
 from Ada_LSN.create_inception import Inception3 as network
 # from Ada_LSN.create_mobilenet import mobilenetv3_large as network
 # from Ada_LSN.create_res2net import res2net50_v1b as network
@@ -118,8 +118,7 @@ class Network(nn.Module):
         dsn4 = self.dsn4(conv4)
         dsn5 = self.dsn5(conv5)
 
-        cell1, cell2, cell3, cell4, cell5 = self.ucells[0], self.ucells[1], self.ucells[2], self.ucells[3], self.ucells[
-            4]
+        cell1, cell2, cell3, cell4, cell5 = self.ucells[0], self.ucells[1], self.ucells[2], self.ucells[3], self.ucells[4]
 
         # cell1 & stage5
         if self.genotype[0][0] == 1:
@@ -175,6 +174,7 @@ class Network(nn.Module):
             if self.genotype[2][3][1] == 1:
                 d1_2 = F.relu(self.cat10(torch.cat([c4, self.crop(d1_2, (0, 0) + c4.size()[2:4])], dim=1)),
                               inplace=True)
+#            c5 = cell5(d1_2)
             c5 = cell5(d1_2)
         else:
             c5 = torch.zeros_like(dsn1)
@@ -215,25 +215,28 @@ class Network(nn.Module):
         if self.genotype[2][5][4] == 1:
             out5 = self.crop(self.super5(c5), (34, 34) + size)
 
-        loss_fuse = b1(out_fuse, input1)
-        loss = 0.0
-        if self.genotype[2][5][0] == 1 and self.genotype[0][0]:
-            loss += b1(out1, input1)
-        if self.genotype[2][5][1] == 1 and self.genotype[0][1]:
-            loss += b1(out2, input1)
-        if self.genotype[2][5][2] == 1 and self.genotype[0][2]:
-            loss += b1(out3, input1)
-        if self.genotype[2][5][3] == 1 and self.genotype[0][3]:
-            loss += b1(out4, input1)
-        if self.genotype[2][5][4] == 1 and self.genotype[0][4]:
-            loss += b1(out5, input1)
-        return loss + loss_fuse, loss_fuse  # for train
-        # if input1 is not None:
-        #     loss_fuse = b1(out_fuse, input1)
-        # else:
-        #     loss_fuse = None
-        # out = torch.sigmoid(out_fuse)
-        # return out, loss_fuse   # for test
+        # loss_fuse = b1(out_fuse, input1)
+        # loss = 0.0
+        # if self.genotype[2][5][0] == 1 and self.genotype[0][0]:
+        #     loss += b1(out1, input1)
+        # if self.genotype[2][5][1] == 1 and self.genotype[0][1]:
+        #     loss += b1(out2, input1)
+        # if self.genotype[2][5][2] == 1 and self.genotype[0][2]:
+        #     loss += b1(out3, input1)
+        # if self.genotype[2][5][3] == 1 and self.genotype[0][3]:
+        #     loss += b1(out4, input1)
+        # if self.genotype[2][5][4] == 1 and self.genotype[0][4]:
+        #     loss += b1(out5, input1)
+        # return loss + loss_fuse, loss_fuse  # for train
+        
+        print('input1: ', input1)
+        if input1 is not None:
+            loss_fuse = b1(out_fuse, input1)
+        else:
+            loss_fuse = None
+        out = torch.sigmoid(out_fuse)
+        print(out.dtype)
+        return out, loss_fuse   # for test
 
     def crop(self, d, region):  # use for crop the keep to input data
         x, y, h, w = region

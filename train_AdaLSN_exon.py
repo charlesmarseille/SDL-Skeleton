@@ -2,7 +2,7 @@ import argparse
 from torch import optim
 import torch
 from torch.utils.data import DataLoader
-from datasets.sklarge_RN_mod import TrainDataset
+from datasets.sklarge_RN_exon import TrainDataset
 from engines.trainer_AdaLSN import Trainer, logging
 from Ada_LSN.model import Network
 from Ada_LSN.utils import *
@@ -10,10 +10,11 @@ import os
 from Ada_LSN.genotypes import geno_inception as geno
 
 # Added to limit mem errors from small GPU
-torch.cuda.empty_cache()
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:300'
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+#torch.cuda.empty_cache()
+#os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:300'
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+#os.environ["CUDA_VISIBLE_DEVICES"]="0"
+#os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
@@ -38,10 +39,6 @@ parser.add_argument('--resume_iter', default=0, type=int)
 parser.add_argument('--save_interval', default=1000, type=int)
 args = parser.parse_args()
 
-
-def CreateFnamesList():
-    fnames = [os.path.abspath(f) for f in os.listdir(args.data1)]
-    return fnames
 
 def train_model(g, dataloader, args):
     try:
@@ -72,8 +69,7 @@ def train_model(g, dataloader, args):
 if __name__ == '__main__':
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
     torch.cuda.set_device(args.gpu_id)
-    fnames_list = CreateFnamesList()
-    dataset = TrainDataset(fnames_list, args.data1)
-    dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # batchsize=1
+    dataset = TrainDataset(args.data1)
+    dataloader = DataLoader(dataset, shuffle=True, batch_size=None)  # batchsize=1
 
     train_model(geno, dataloader, args)

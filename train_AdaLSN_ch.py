@@ -2,7 +2,7 @@ import argparse
 from torch import optim
 import torch
 from torch.utils.data import DataLoader
-from datasets.sklarge_RN_mod import TrainDataset
+from datasets.sklarge_RN_ch import TrainDataset
 from engines.trainer_AdaLSN import Trainer, logging
 from Ada_LSN.model import Network
 from Ada_LSN.utils import *
@@ -38,10 +38,26 @@ parser.add_argument('--resume_iter', default=0, type=int)
 parser.add_argument('--save_interval', default=1000, type=int)
 args = parser.parse_args()
 
+def get_fileNames():
+    dataset_train = []
+    dataset_test = []
+    sup_data_paths = [
+        'C:/Users/cmarseille/Documents/GitHub/SDL-Skeleton/datasets/dataset_camille_128/true_data/',
+        'C:/Users/cmarseille/Documents/GitHub/SDL-Skeleton/datasets/dataset_camille_128/false_data/',
+        'C:/Users/cmarseille/Documents/GitHub/SDL-Skeleton/datasets/dataset_camille_128/true_data/',
+        'C:/Users/cmarseille/Documents/GitHub/SDL-Skeleton/datasets/dataset_camille_128/false_data/',
+        ]
+    th_data = [1.0, 0.025, 1.0, 0.025]
+    for i, path in enumerate(sup_data_paths):
+        for file in os.listdir(path):
+            if np.random.random() <= th_data[i]:
+                _, idxi, idxj = file.split('_')
+                if int(idxi) <= 6000:
+                    dataset_train.append(path+file)
+                else:
+                    dataset_test.append(path+file)
+    return dataset_train
 
-def CreateFnamesList():
-    fnames = [os.path.abspath(f) for f in os.listdir(args.data1)]
-    return fnames
 
 def train_model(g, dataloader, args):
     try:
@@ -72,8 +88,8 @@ def train_model(g, dataloader, args):
 if __name__ == '__main__':
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
     torch.cuda.set_device(args.gpu_id)
-    fnames_list = CreateFnamesList()
-    dataset = TrainDataset(fnames_list, args.data1)
-    dataloader = DataLoader(dataset, batch_size=8, shuffle=True)  # batchsize=1
+    fileNames = get_fileNames()
+    dataset = TrainDataset(fileNames, args.data1)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)  # batchsize=1
 
     train_model(geno, dataloader, args)
