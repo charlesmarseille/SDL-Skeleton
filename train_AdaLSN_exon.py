@@ -27,7 +27,7 @@ parser.add_argument('--C', default=64, type=int)  # 32/64/128
 parser.add_argument('--each_steps', default=1000, type=int)
 parser.add_argument('--numu_layers', default=5, type=int)
 parser.add_argument('--u_layers', default=[0, 1, 2, 3], type=list)
-parser.add_argument('--lr', default=1e-6, type=float)
+parser.add_argument('--lr', default=1e-5, type=float)
 parser.add_argument('--lr_step', default=70000, type=int)
 parser.add_argument('--lr_gamma', default=0.1, type=float)
 parser.add_argument('--momentum', default=0.9, type=float)
@@ -35,7 +35,7 @@ parser.add_argument('--weight_decay', default=0.0002, type=float)
 parser.add_argument('--iter_size', default=10, type=int)
 parser.add_argument('--max_step', default=80000, type=int)  # train max_step each architecture
 parser.add_argument('--disp_interval', default=100, type=int)
-parser.add_argument('--resume_iter', default=0, type=int)
+parser.add_argument('--resume_iter', default=12000, type=int)
 parser.add_argument('--save_interval', default=1000, type=int)
 args = parser.parse_args()
 
@@ -57,6 +57,7 @@ def train_model(g, dataloader, args):
 #    net = Network(args.C, args.numu_layers, args.u_layers, geno,
 #                  pretrained_model='./pretrained_model/inceptionV3.pth').cuda(args.gpu_id)
     net = Network(args.C, args.numu_layers, args.u_layers, geno).cuda(args.gpu_id)
+    net.mode = 0    # put the model in train mode (dropouts active)
 
     logging.info('params:%.3fM' % count_parameters_in_MB(net))
     lr = args.lr / args.iter_size

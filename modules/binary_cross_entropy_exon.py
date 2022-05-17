@@ -10,8 +10,8 @@ class binary_cross_entropy(torch.autograd.Function):
         beta = 1 - torch.mean(target)
         weights = 1 - beta + (2 * beta - 1) * target
         pos = (input >= 0).float()
-        #binary_cross_entropy_loss = torch.log(1 + (input - 2 * input * pos).exp()) - input * (target - pos)
-        #binary_cross_entropy_loss = bce_loss(m(input), target, reduce=None)
+#        binary_cross_entropy_loss = torch.log(1 + (input - 2 * input * pos).exp()) - input * (target - pos)
+#        binary_cross_entropy_loss = bce_loss(m(input), target, reduce=None)
         binary_cross_entropy_loss = bce_loss(input, target)
         loss = torch.sum((binary_cross_entropy_loss * weights).view(-1), dim=0, keepdim=True)
         ctx.save_for_backward(input, target)

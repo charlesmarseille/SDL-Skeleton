@@ -68,6 +68,7 @@ class Network(nn.Module):
             cell = Cell(genotype[1][i], C_prev, C_curr, flag=flag)  # Unit is Cell
             self.ucells += [cell]
         self.fuse_cell = Cell(genotype[2][6], C_curr, C_curr, flag=1)
+        self.mode = 0   # 0 = train, 1 = test
 
         # dsn， change here if backbone changes
         self.dsn1 = nn.Conv2d(64, C, 1)
@@ -215,28 +216,28 @@ class Network(nn.Module):
         if self.genotype[2][5][4] == 1:
             out5 = self.crop(self.super5(c5), (34, 34) + size)
 
-        # loss_fuse = b1(out_fuse, input1)
-        # loss = 0.0
-        # if self.genotype[2][5][0] == 1 and self.genotype[0][0]:
-        #     loss += b1(out1, input1)
-        # if self.genotype[2][5][1] == 1 and self.genotype[0][1]:
-        #     loss += b1(out2, input1)
-        # if self.genotype[2][5][2] == 1 and self.genotype[0][2]:
-        #     loss += b1(out3, input1)
-        # if self.genotype[2][5][3] == 1 and self.genotype[0][3]:
-        #     loss += b1(out4, input1)
-        # if self.genotype[2][5][4] == 1 and self.genotype[0][4]:
-        #     loss += b1(out5, input1)
-        # return loss + loss_fuse, loss_fuse  # for train
-        
-        print('input1: ', input1)
-        if input1 is not None:
+        if self.mode == 0:
             loss_fuse = b1(out_fuse, input1)
-        else:
-            loss_fuse = None
-        out = torch.sigmoid(out_fuse)
-        print(out.dtype)
-        return out, loss_fuse   # for test
+            loss = 0.0
+            if self.genotype[2][5][0] == 1 and self.genotype[0][0]:
+                loss += b1(out1, input1)
+            if self.genotype[2][5][1] == 1 and self.genotype[0][1]:
+                loss += b1(out2, input1)
+            if self.genotype[2][5][2] == 1 and self.genotype[0][2]:
+                loss += b1(out3, input1)
+            if self.genotype[2][5][3] == 1 and self.genotype[0][3]:
+                loss += b1(out4, input1)
+            if self.genotype[2][5][4] == 1 and self.genotype[0][4]:
+                loss += b1(out5, input1)
+            return loss + loss_fuse, loss_fuse  # for train
+    
+        elif self.mode == 1:
+            if input1 is not None:
+                loss_fuse = b1(out_fuse, input1)
+            else:
+                loss_fuse = None
+            out = torch.sigmoid(out_fuse)
+            return out, loss_fuse   # for test
 
     def crop(self, d, region):  # use for crop the keep to input data
         x, y, h, w = region

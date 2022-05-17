@@ -33,7 +33,8 @@ class Trainer(object):
     def train(self):
         lossAcc = 0.0
         lossFuse = 0.0
-        self.network.eval()  # if backbone has BN layers, freeze them
+        #self.network.eval()  # if backbone has BN layers, freeze them
+        self.network.train()
         dataiter = iter(self.dataloader)
         for _ in range(self.args.resume_iter // self.args.lr_step):
             self.adjustLR()
@@ -57,7 +58,8 @@ class Trainer(object):
                 loss.backward()
                 lossAcc += loss.data[0]
                 lossFuse += fuse_loss.data[0]
-            
+
+            #torch.nn.utils.clip_grad_norm_(self.network.parameters, 5.)        #CM - added to limit gradient explosion
             self.optimizer.step()
             self.optimizer.zero_grad()
             
@@ -75,6 +77,29 @@ class Trainer(object):
                 if step < self.args.max_step - 1:
                     lossAcc = 0.0
                     lossFuse = 0.0
+                #Plot results
+                # self.network.eval()
+                # start = 1000
+                # nx=5
+                # size = 15
+                # pylab.rcParams['figure.figsize'] = size, size / 2
+                # fig,ax = plt.subplots(nx, 3)
+                # for i, (inp, test_inp, fname, H, W) in enumerate(self.dataloader[start:start+nx]):
+                #     fileName = output_dir + fname[0].split('/')[-1][:-4] + '.png'
+                #     tep += 1
+                #     inp = Variable(inp.cuda(gpu_id))
+                #     out = net(inp, None)
+                #     image = out[0].data[0, 0].cpu().numpy().astype(np.float32)
+                #     ax[j,0].imshow(inp.cpu()[0,0])
+                #     ax[j,1].imshow(1 - image, cmap=cm.Greys_r)
+                #     ax[j,0].set_xticklabels([])
+                #     ax[j,0].set_yticklabels([])
+                #     ax[j,1].set_xticklabels([])
+                #     ax[j,1].set_yticklabels([])
+                #     plt.tight_layout()
+                #     plt.show()
+
+
 
             if (step + 1) % self.args.save_interval == 0:
                 torch.save(self.network.state_dict(),

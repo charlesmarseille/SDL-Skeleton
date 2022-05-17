@@ -55,7 +55,7 @@ class TrainDataset(Dataset):
             targetImage = image[:,:,-1]
             if len(targetImage.shape) == 3:
                 targetImage = targetImage[:, :, 0]
-#            targetImage = targetImage > 0.0
+            targetImage = targetImage > 0.0
             targetImage = targetImage.astype(np.float32)
             targetImage = np.expand_dims(targetImage, axis=0)
 
@@ -136,18 +136,22 @@ class TestDataset(Dataset):
     def __getitem__(self, idx):
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
         inputName = self.fileNames[idx]
-        inputImage = tifffile.imread(inputName)[:,:,:-1]
+
+        image = tifffile.imread(inputName)
+        inputImage = image[:,:,:-1]
+        testImage = image[:, :, -1]
         #inputImage = io.imread(inputName)[:,:,:-1]
         inputImage = inputImage[:, :, ::-1]
-        K = 60000.0  # 180000.0 for sympascal
+        #K = 60000.0  # 180000.0 for sympascal
         H, W = inputImage.shape[0], inputImage.shape[1]
-        sy = np.sqrt(K * H / W) / float(H)
-        sx = np.sqrt(K * W / H) / float(W)
-        inputImage = cv2.resize(inputImage, None, None, fx=sx, fy=sy, interpolation=cv2.INTER_LINEAR)
+        #sy = np.sqrt(K * H / W) / float(H)
+        #sx = np.sqrt(K * W / H) / float(W)
+        #inputImage = cv2.resize(inputImage, None, None, fx=sx, fy=sy, interpolation=cv2.INTER_LINEAR)
         inputImage = inputImage.astype(np.float32)
         inputImage = np.true_divide(np.subtract(inputImage, self.means), self.stds)
         inputImage = inputImage.transpose((2, 0, 1))
-
+        #print('input image shape: ', inputImage.shape)
         inputImage = torch.Tensor(inputImage)
-        return inputImage, inputName, H, W
+
+        return inputImage, testImage, inputName, H, W
 
