@@ -20,23 +20,22 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 parser = argparse.ArgumentParser(description='TRAIN SKLARGE')
 parser.add_argument('--data1', default='./datasets/dataset_camille_128/', type=str)
-#parser.add_argument('--data2', default='./datasets/sk_large_dataset/sk1491/train_pairRN60_255_s_all.lst', type=str)
 parser.add_argument('--gpu_id', default=0, type=int)
 parser.add_argument('--INF', default=1e6, type=int)
-parser.add_argument('--C', default=64, type=int)  # 32/64/128
-parser.add_argument('--each_steps', default=1000, type=int)
+parser.add_argument('--C', default=32, type=int)  # 32/64/128
+parser.add_argument('--each_steps', default=500, type=int)
 parser.add_argument('--numu_layers', default=5, type=int)
 parser.add_argument('--u_layers', default=[0, 1, 2, 3], type=list)
-parser.add_argument('--lr', default=1e-5, type=float)
-parser.add_argument('--lr_step', default=70000, type=int)
-parser.add_argument('--lr_gamma', default=0.1, type=float)
+parser.add_argument('--lr', default=1.e-4, type=float)
+parser.add_argument('--lr_step', default=60000, type=int)
+parser.add_argument('--lr_gamma', default=0.05, type=float)
 parser.add_argument('--momentum', default=0.9, type=float)
 parser.add_argument('--weight_decay', default=0.0002, type=float)
 parser.add_argument('--iter_size', default=10, type=int)
 parser.add_argument('--max_step', default=80000, type=int)  # train max_step each architecture
 parser.add_argument('--disp_interval', default=100, type=int)
-parser.add_argument('--resume_iter', default=12000, type=int)
-parser.add_argument('--save_interval', default=1000, type=int)
+parser.add_argument('--resume_iter', default=0, type=int)
+parser.add_argument('--save_interval', default=500, type=int)
 args = parser.parse_args()
 
 
@@ -71,6 +70,7 @@ if __name__ == '__main__':
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
     torch.cuda.set_device(args.gpu_id)
     dataset = TrainDataset(args.data1)
-    dataloader = DataLoader(dataset, shuffle=True, batch_size=None)  # batchsize=1
+    dataloader = DataLoader(dataset, shuffle=True, batch_size=None)
+    
 
     train_model(geno, dataloader, args)

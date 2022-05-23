@@ -4,7 +4,7 @@ m = torch.nn.Sigmoid()
 #bce_loss = torch.nn.BCELoss()
 bce_loss = torch.nn.BCEWithLogitsLoss()
 
-class binary_cross_entropy(torch.autograd.Function):
+class loss_func(torch.autograd.Function):
     @staticmethod
     def forward(ctx, input, target):
         beta = 1 - torch.mean(target)
@@ -12,8 +12,8 @@ class binary_cross_entropy(torch.autograd.Function):
         pos = (input >= 0).float()
 #        binary_cross_entropy_loss = torch.log(1 + (input - 2 * input * pos).exp()) - input * (target - pos)
 #        binary_cross_entropy_loss = bce_loss(m(input), target, reduce=None)
-        binary_cross_entropy_loss = bce_loss(input, target)
-        loss = torch.sum((binary_cross_entropy_loss * weights).view(-1), dim=0, keepdim=True)
+        dicefocalloss = self.dice_focal_loss(input, target)
+        loss = torch.sum((dicefocalloss * weights).view(-1), dim=0, keepdim=True)
         ctx.save_for_backward(input, target)
         return loss
 
@@ -25,4 +25,4 @@ class binary_cross_entropy(torch.autograd.Function):
         grad = (torch.sigmoid(input) - target) * weights
         return grad * grad_output, None
 
-bce2d = binary_cross_entropy.apply
+lf = loss_func.apply

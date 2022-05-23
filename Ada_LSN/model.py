@@ -1,6 +1,6 @@
 from Ada_LSN.operations import *
 import torch.nn.functional as F
-from modules.binary_cross_entropy_exon import bce2d as b1
+from modules.loss_function import lf as b1
 from Ada_LSN.create_inception import Inception3 as network
 # from Ada_LSN.create_mobilenet import mobilenetv3_large as network
 # from Ada_LSN.create_res2net import res2net50_v1b as network

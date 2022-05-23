@@ -5,14 +5,15 @@ import sys
 from utils import *
 from torch.autograd import Variable
 import torch
+import matplotlib.pyplot as plt
 
-save = 'eval-{}'.format(time.strftime("%Y%m%d-%H%M%S"))
-create_exp_dir(save)
+save_dir = 'train-{}'.format(time.strftime("%Y%m%d-%H%M%S"))
+create_exp_dir(save_dir)
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(save, 'log.txt'))
+fh = logging.FileHandler(os.path.join(save_dir, 'train_log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
@@ -31,6 +32,11 @@ class Trainer(object):
         self.timeformat = '%Y-%m-%d %H:%M:%S'
 
     def train(self):
+        args_s = ''
+        #logging.info(args_s.join([f'{arg} ' for arg in sorthelper.sortNumbers(self.args)]))
+        #plt.ion()
+        #fig, ax = plt.subplots(1,2)
+        loss_g = [0]
         lossAcc = 0.0
         lossFuse = 0.0
         #self.network.eval()  # if backbone has BN layers, freeze them
@@ -52,13 +58,16 @@ class Trainer(object):
                 data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
 
                 loss, fuse_loss = self.network(data, target)
-                if np.isnan(float(loss.data[0])):
-                    raise ValueError('loss is nan while training')
+                #if np.isnan(float(loss.data[0])):
+                #if np.isnan(float(loss.item())):
+                #    raise ValueError('loss is nan while training')
                 loss /= self.args.iter_size
                 loss.backward()
                 lossAcc += loss.data[0]
+                #lossAcc += loss.item()
                 lossFuse += fuse_loss.data[0]
-
+                #lossFuse += fuse_loss.item()
+            
             #torch.nn.utils.clip_grad_norm_(self.network.parameters, 5.)        #CM - added to limit gradient explosion
             self.optimizer.step()
             self.optimizer.zero_grad()
@@ -77,27 +86,13 @@ class Trainer(object):
                 if step < self.args.max_step - 1:
                     lossAcc = 0.0
                     lossFuse = 0.0
+
                 #Plot results
-                # self.network.eval()
-                # start = 1000
-                # nx=5
-                # size = 15
-                # pylab.rcParams['figure.figsize'] = size, size / 2
-                # fig,ax = plt.subplots(nx, 3)
-                # for i, (inp, test_inp, fname, H, W) in enumerate(self.dataloader[start:start+nx]):
-                #     fileName = output_dir + fname[0].split('/')[-1][:-4] + '.png'
-                #     tep += 1
-                #     inp = Variable(inp.cuda(gpu_id))
-                #     out = net(inp, None)
-                #     image = out[0].data[0, 0].cpu().numpy().astype(np.float32)
-                #     ax[j,0].imshow(inp.cpu()[0,0])
-                #     ax[j,1].imshow(1 - image, cmap=cm.Greys_r)
-                #     ax[j,0].set_xticklabels([])
-                #     ax[j,0].set_yticklabels([])
-                #     ax[j,1].set_xticklabels([])
-                #     ax[j,1].set_yticklabels([])
-                #     plt.tight_layout()
-                #     plt.show()
+                self.fname = step / self.args.disp_interval
+                #self.testSingle()
+
+                self.network.train()
+
 
 
 
@@ -116,3 +111,35 @@ class Trainer(object):
         for param_group in self.optimizer.param_groups:
             logging.info(param_group['lr'])
         logging.info('')
+
+    def testSingle(self):
+        gpu_id = 0
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        torch.cuda.set_device(gpu_id)
+        torch.cuda.empty_cache()
+        self.network.mode = 1    # put the model in test mode (dropouts inactive)
+        dataiter = iter(self.dataloader)
+        self.inp = Variable(next(dataiter)[0].cuda(gpu_id))
+        self.test_inp = self.inp[:,-1]
+        self.out = self.network(self.inp, None)
+        self.plot_results()
+
+    def plot_results(self):
+        start = 500
+        nx=1
+        size = 15
+        pylab.rcParams['figure.figsize'] = size, size / 2
+        shape = 3
+        fig, ax = plt.subplots(1, 3)
+        image = self.out[0].data[0, 0].cpu().numpy().astype(np.float32)
+        ax[0].imshow(self.inp.cpu()[0,0])
+        ax[1].imshow(self.test_inp.cpu()[0])
+        ax[2].imshow(1 - image, cmap=cm.Greys_r)
+        ax[0].set_xticklabels([])
+        ax[0].set_yticklabels([])
+        ax[1].set_xticklabels([])
+        ax[1].set_yticklabels([])
+        ax[2].set_xticklabels([])
+        ax[2].set_yticklabels([])
+        plt.tight_layout()
+        plt.savefig(f'epoch_{self.fname}.png')

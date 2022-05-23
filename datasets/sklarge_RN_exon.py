@@ -122,12 +122,10 @@ class TrainDataset(Dataset):
 #         return X, inputNames, Hs, Ws
 
 class TestDataset(Dataset):
-    def __init__(self, rootDir, transform=None):
-        self.rootDir = rootDir
+    def __init__(self, transform=None):
         self.means = [22775.8, 11.3, 7.8, 0.11]
         self.stds = [924.8, 6.8, 6.9, 0.097]
         self.transform = transform
-        self.batch_size = 8
         self.fileNames = get_fileNames()[1]
 
     def __len__(self):
@@ -150,8 +148,7 @@ class TestDataset(Dataset):
         inputImage = inputImage.astype(np.float32)
         inputImage = np.true_divide(np.subtract(inputImage, self.means), self.stds)
         inputImage = inputImage.transpose((2, 0, 1))
-        #print('input image shape: ', inputImage.shape)
-        inputImage = torch.Tensor(inputImage)
+        inputImage = torch.Tensor(inputImage[:,:,:-1])
 
         return inputImage, testImage, inputName, H, W
 
