@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 save_dir = 'train-{}'.format(time.strftime("%Y%m%d-%H%M%S"))
 create_exp_dir(save_dir)
+dataset_name = 'camille'
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -85,25 +86,16 @@ class Trainer(object):
                              lossFuse / self.args.disp_interval / self.args.iter_size))
                 if step < self.args.max_step - 1:
                     lossAcc = 0.0
-                    lossFuse = 0.0
-
-                #Plot results
-                self.step = step
-                self.lossAccList.append(lossAcc)
-                #self.testSingle()
-
-                # put net in train mode
-                #self.network.train()
+                    lossFuse = 0.0       
 
 
-
-            if not os.path.exists('./Ada_LSN/weights/inception_sklarge'):
-                os.makedirs('./Ada_LSN/weights/inception_camille')
+            if not os.path.exists(f'./Ada_LSN/weights/inception_{dataset_name}'):
+                os.makedirs(f'./Ada_LSN/weights/inception_{dataset_name}')
             if (step + 1) % self.args.save_interval == 0:
                 torch.save(self.network.state_dict(),
-                           './Ada_LSN/weights/inception_camille/skel_{}.pth'.format(step + 1))
+                           f'./Ada_LSN/weights/inception_{dataset_name}/skel_{step + 1}.pth')
         torch.save(self.network.state_dict(),
-                   './Ada_LSN/weights/inception_camille/skel_{}.pth'.format(self.args.max_step))
+                   f'./Ada_LSN/weights/inception_{dataset_name}/skel_{self.args.max_step}.pth')
         return lossAcc / self.args.disp_interval
 
     def adjustLR(self):
