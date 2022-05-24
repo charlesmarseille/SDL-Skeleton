@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.pylab as pylab
 import scipy.io as scio
 import tifffile
+from glob import glob
 
 def plot_results(out, inp, test_inp, ax, j):
     image = out[0].data[0, 0].cpu().numpy().astype(np.float32)
@@ -49,7 +50,7 @@ def test_dataset():
 
     dataset = TestDataset()
     dataloader = list(DataLoader(dataset, batch_size=1))
-    output_dir = './Ada_LSN/output/inception_camille/results/'
+    output_dir = glob('train*/')[-1]+'results/'
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -62,12 +63,13 @@ def test_dataset():
     shape = 3
     fig,ax = plt.subplots(nx, 3)
     for i, (inp, test_inp, fname, H, W) in enumerate(dataloader[start:start+nx]):
-        fileName = output_dir + fname[0].split('/')[-1][:-4] + '.png'
+        fileName = output_dir + fname[0].split('/')[-1][:-4] + str(args.weights) + '.png'
         tep += 1
         #inp = Variable(inp[:, :-1].cuda(gpu_id))
         inp = Variable(inp.cuda(gpu_id))
         out = net(inp, None)
         plot_results(out, inp, test_inp, ax, i)
+        np.savez(fileName[:-4]+str(args.weights), inp=inp.cpu()[0,0], test=test_inp.cpu()[0], out=out[0].data[0, 0].cpu().numpy().astype(np.float32))
         #out_np = out[0].data[0][0, 0].cpu().numpy()
         #out_resize = cv2.resize(out_np, (W.item(), H.item()), interpolation=cv2.INTER_LINEAR)
         #s = plt.subplot(1, 5, 1)

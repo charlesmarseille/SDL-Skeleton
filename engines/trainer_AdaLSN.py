@@ -36,7 +36,7 @@ class Trainer(object):
         #logging.info(args_s.join([f'{arg} ' for arg in sorthelper.sortNumbers(self.args)]))
         #plt.ion()
         #fig, ax = plt.subplots(1,2)
-        loss_g = [0]
+        self.lossAccList = []
         lossAcc = 0.0
         lossFuse = 0.0
         #self.network.eval()  # if backbone has BN layers, freeze them
@@ -88,19 +88,22 @@ class Trainer(object):
                     lossFuse = 0.0
 
                 #Plot results
-                self.fname = step / self.args.disp_interval
+                self.step = step
+                self.lossAccList.append(lossAcc)
                 #self.testSingle()
 
-                self.network.train()
+                # put net in train mode
+                #self.network.train()
 
 
 
-
+            if not os.path.exists('./Ada_LSN/weights/inception_sklarge'):
+                os.makedirs('./Ada_LSN/weights/inception_camille')
             if (step + 1) % self.args.save_interval == 0:
                 torch.save(self.network.state_dict(),
-                           './Ada_LSN/weights/inception_sklarge/skel_{}.pth'.format(step + 1))
+                           './Ada_LSN/weights/inception_camille/skel_{}.pth'.format(step + 1))
         torch.save(self.network.state_dict(),
-                   './Ada_LSN/weights/inception_sklarge/skel_{}.pth'.format(self.args.max_step))
+                   './Ada_LSN/weights/inception_camille/skel_{}.pth'.format(self.args.max_step))
         return lossAcc / self.args.disp_interval
 
     def adjustLR(self):
@@ -122,9 +125,14 @@ class Trainer(object):
         self.inp = Variable(next(dataiter)[0].cuda(gpu_id))
         self.test_inp = self.inp[:,-1]
         self.out = self.network(self.inp, None)
-        self.plot_results()
 
-    def plot_results(self):
+        plt.plot((self.step) / self.args.disp_interval, self.lossAccList, label='train lossAcc')
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.legend()
+        plt.show(block=False)
+
+    def plot_images(self):
         start = 500
         nx=1
         size = 15
