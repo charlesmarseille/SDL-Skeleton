@@ -7,9 +7,9 @@ from torch.autograd import Variable
 import torch
 import matplotlib.pyplot as plt
 
-save_dir = 'train-{}'.format(time.strftime("%Y%m%d-%H%M%S"))
+save_dir = 'Ada_LSN/weights/train-{}'.format(time.strftime("%Y%m%d-%H%M%S"))
 create_exp_dir(save_dir)
-dataset_name = 'camille'
+#dataset_name = 'nord_cotiere'
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -26,6 +26,7 @@ class Trainer(object):
         self.network = network
         self.optimizer = optimizer
         self.dataloader = dataloader
+        self.dataset = args.dataset
 
         if not os.path.exists('weights'):
             os.makedirs('weights')
@@ -89,13 +90,13 @@ class Trainer(object):
                     lossFuse = 0.0       
 
 
-            if not os.path.exists(f'./Ada_LSN/weights/inception_{dataset_name}'):
-                os.makedirs(f'./Ada_LSN/weights/inception_{dataset_name}')
+            if not os.path.exists(f'{save_dir}'):
+                os.makedirs(f'{save_dir}')
             if (step + 1) % self.args.save_interval == 0:
                 torch.save(self.network.state_dict(),
-                           f'./Ada_LSN/weights/inception_{dataset_name}/skel_{step + 1}.pth')
+                           f'{save_dir}/skel_{step + 1}.pth')
         torch.save(self.network.state_dict(),
-                   f'./Ada_LSN/weights/inception_{dataset_name}/skel_{self.args.max_step}.pth')
+                   f'{save_dir}/skel_{self.args.max_step}.pth')
         return lossAcc / self.args.disp_interval
 
     def adjustLR(self):

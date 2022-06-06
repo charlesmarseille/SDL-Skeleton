@@ -8,6 +8,7 @@ from Ada_LSN.model import Network
 from Ada_LSN.utils import *
 import os
 from Ada_LSN.genotypes import geno_inception as geno
+from glob import glob
 
 # Added to limit mem errors from small GPU
 #torch.cuda.empty_cache()
@@ -18,15 +19,16 @@ from Ada_LSN.genotypes import geno_inception as geno
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
-parser = argparse.ArgumentParser(description='TRAIN SKLARGE')
-parser.add_argument('--data1', default='./datasets/dataset_camille_128/', type=str)
+parser = argparse.ArgumentParser(description='TRAIN SDL-skeleton')
+parser.add_argument('--dataset', default='ryam', type=str)          #ryam or nord_cotiere
+parser.add_argument('--with_mhc', default=None, type=bool)
 parser.add_argument('--gpu_id', default=0, type=int)
 parser.add_argument('--INF', default=1e6, type=int)
 parser.add_argument('--C', default=32, type=int)  # 32/64/128
 parser.add_argument('--each_steps', default=500, type=int)
 parser.add_argument('--numu_layers', default=5, type=int)
 parser.add_argument('--u_layers', default=[0, 1, 2, 3], type=list)
-parser.add_argument('--lr', default=1.e-4, type=float)
+parser.add_argument('--lr', default=1.e-6, type=float)
 parser.add_argument('--lr_step', default=60000, type=int)
 parser.add_argument('--lr_gamma', default=0.05, type=float)
 parser.add_argument('--momentum', default=0.9, type=float)
@@ -63,13 +65,16 @@ def train_model(g, dataloader, args):
     optimizer = optim.Adam(net.parameter(args.lr), lr=lr, betas=(0.9, 0.999), weight_decay=args.weight_decay)
 
     trainer = Trainer(net, optimizer, dataloader, args)
+    save_dir = glob('Ada_LSN/weights/train*/')[-1]
+    with open(save_dir+'train_log.txt', 'a+') as f:
+        f.write(' '.join([(arg+','+str(getattr(args, arg))) for arg in vars(args)])+'\n')
     loss = trainer.train()
 
 
 if __name__ == '__main__':
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
     torch.cuda.set_device(args.gpu_id)
-    dataset = TrainDataset(args.data1)
+    dataset = TrainDataset(args)
     dataloader = DataLoader(dataset, shuffle=True, batch_size=None)
     
 

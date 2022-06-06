@@ -30,15 +30,17 @@ def plot_results(inp, test_inp, out, ax, j):
 
 
 parser = argparse.ArgumentParser(description='TEST camille')
-parser.add_argument('-W', '--weights', default=80000, type=int)
+parser.add_argument('--dataset', default='ryam', type=str)
+parser.add_argument('--with_mhc', default=None, type=bool)
+parser.add_argument('-W', '--weights', default=5500, type=int)
 parser.add_argument('-S', '--start', default=100, type=int)
-parser.add_argument('--C', default=64, type=int)  # 32/64/128
+parser.add_argument('--C', default=32, type=int)  # 32/64/128
 args = parser.parse_args()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
-dataset_name = 'camille'
+dataset_name = 'nord_cotiere'
 
 def test_dataset():
     gpu_id = 0
@@ -49,7 +51,7 @@ def test_dataset():
     net.load_state_dict(torch.load(f'./Ada_LSN/weights/inception_{dataset_name}/skel_{args.weights}.pth', map_location=lambda storage, loc: storage))
     net.mode = 1    # put the model in test mode (dropouts inactive)
 
-    dataset = TestDataset()
+    dataset = TestDataset(args)
     dataloader = list(DataLoader(dataset, batch_size=1))
     path = glob('train*/')[-1]
     output_dir = path + 'results/'
@@ -58,7 +60,7 @@ def test_dataset():
         os.makedirs(output_dir)
     start_time = time.time()
     tep = 1
-    start = 500
+    start = 100
     nx=5
     size = 10
     pylab.rcParams['figure.figsize'] = size, size
@@ -75,12 +77,12 @@ def test_dataset():
         plot_results(inp, test_inp, out, ax, i)
         np.savez(fileName[:-4]+str(args.weights), inp=inp, test=test_inp, out=out)
     plt.tight_layout()
-    plt.show(block=False)
+    plt.show()
     plt.savefig(path+'epoch'+str(args.weights))
     diff_time = time.time() - start_time
     print('Detection took {:.3f}s per image'.format(diff_time / len(dataloader)))
-    loss = np.abs(out-test_inp[:,:-1]).sum()
-    with open(path+'test_loss.csv', 'a+') as f:
-        f.write(str(args.weights)+','+str(loss)+'\n')
+    #loss = np.abs(out-test_inp[:,:-1]).sum()
+    #with open(path+'test_loss.csv', 'a+') as f:
+    #    f.write(str(args.weights)+','+str(loss)+'\n')
 
 test_dataset()
